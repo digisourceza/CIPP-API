@@ -17,25 +17,22 @@ function Set-PwPushConfig {
     if ($Configuration.BaseUrl) {
         $InitParams.BaseUrl = $Configuration.BaseUrl
     }
-    if (![string]::IsNullOrEmpty($Configuration.EmailAddress) -or $Configuration.PWPushPro -eq $true) {
+    if (![string]::IsNullOrEmpty($Configuration.EmailAddress) -or $Configuration.UseBearerAuth -eq $true) {
         $ApiKey = Get-ExtensionAPIKey -Extension 'PWPush'
-
-        if (![string]::IsNullOrEmpty($ApiKey)) {
+        if ($Configuration.UseBearerAuth -eq $true) {
+            $InitParams.Bearer = $ApiKey
+        } elseif (![string]::IsNullOrEmpty($ApiKey)) {
+            if (![string]::IsNullOrEmpty($Configuration.EmailAddress)) {
+                $InitParams.EmailAddress = $Configuration.EmailAddress
+            }
             $InitParams.APIKey = $ApiKey
         }
-        if (![string]::IsNullOrEmpty($Configuration.EmailAddress)) {
-            $InitParams.EmailAddress = $Configuration.EmailAddress
-        }
-        if ($Configuration.PWPushPro -eq $true) {
-            $InitParams.AccountType = 'Pro'
-            $InitParams.Remove('BaseUrl')
-        }
     }
-    Write-Information ($InitParams | ConvertTo-Json)
 
     $Module = Get-Module PassPushPosh -ListAvailable
-    Write-Host $Module.Version
+    Write-Information "PWPush Version: $($Module.Version)"
     if ($PSCmdlet.ShouldProcess('Initialize-PassPushPosh')) {
+        Write-Information ($InitParams | ConvertTo-Json)
         Initialize-PassPushPosh @InitParams
     }
 }
