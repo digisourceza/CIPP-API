@@ -35,13 +35,13 @@ function Invoke-CIPPStandardEXODisableAutoForwarding {
     param($Tenant, $Settings)
     ##$Rerun -Type Standard -Tenant $Tenant -Settings $Settings 'EXODisableAutoForwarding'
 
-    $CurrentInfo = New-ExoRequest -tenantid $Tenant -cmdlet 'Get-HostedOutboundSpamFilterPolicy' -cmdparams @{Identity = 'Default' } -useSystemMailbox $true
+    $CurrentInfo = New-ExoRequest -tenantid $Tenant -cmdlet 'Get-HostedOutboundSpamFilterPolicy' -cmdParams @{Identity = 'Default' } -useSystemMailbox $true
     $StateIsCorrect = $CurrentInfo.AutoForwardingMode -eq 'Off'
 
     If ($Settings.remediate -eq $true) {
 
         try {
-            New-ExoRequest -tenantid $tenant -cmdlet 'Set-HostedOutboundSpamFilterPolicy' -cmdparams @{ Identity = 'Default'; AutoForwardingMode = 'Off' } -useSystemMailbox $true
+            New-ExoRequest -tenantid $tenant -cmdlet 'Set-HostedOutboundSpamFilterPolicy' -cmdParams @{ Identity = 'Default'; AutoForwardingMode = 'Off' } -useSystemMailbox $true
             Write-LogMessage -API 'Standards' -tenant $tenant -message 'Disabled auto forwarding' -sev Info
         } catch {
             $ErrorMessage = Get-CippException -Exception $_
@@ -54,7 +54,7 @@ function Invoke-CIPPStandardEXODisableAutoForwarding {
         if ($StateIsCorrect -eq $true) {
             Write-LogMessage -API 'Standards' -tenant $tenant -message 'Auto forwarding is disabled.' -sev Info
         } else {
-            Write-StandardsAlert -message 'Auto forwarding is not disabled' -object $CurrentInfo -tenant $tenant -standardName 'EXODisableAutoForwarding' -standardId $Settings.standardId
+            Write-StandardsAlert -message 'Auto forwarding is not disabled' -object ($CurrentInfo | Select-Object AutoForwardingMode) -tenant $tenant -standardName 'EXODisableAutoForwarding' -standardId $Settings.standardId
             Write-LogMessage -API 'Standards' -tenant $tenant -message 'Auto forwarding is not disabled.' -sev Info
         }
     }
